@@ -1,0 +1,15 @@
+name: ESLint
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      working-directory: ./app
+      run: yarn
+    - name: Analyzing Code w/ ESLint
+      working-directory: ./app
+      run: yarn run eslint app.js

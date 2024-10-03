@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaoskube
+  namespace: sre-challenge
+  labels:
+    app: chaoskube
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: chaoskube
+  template:
+    metadata:
+      labels:
+        app: chaoskube
+    spec:
+      serviceAccountName: chaoskube
+      containers:
+      - name: chaoskube
+        image: ghcr.io/linki/chaoskube:v0.29.0
+        args:
+        # kill a pod every 5 minutes
+        - --interval=5m
+        # only consider pods with this annotation
+        - --annotations=chaos.alpha.kubernetes.io/enabled=true
+        # exclude DaemonSet pods (these should not be killed)
+        - --kinds=!DaemonSet
+        # exclude all pods in the kube-system namespace
+        - --namespaces=!kube-system
+        - --timezone=UTC
+        # exclude all pods that haven't been running for at least one hour
+        - --minimum-age=5m
+        # this disables dry-run mode which is on by default
+        - --no-dry-run
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Note Taker</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <style>
+    body {
+      background-color: #f7f7f7;
+    }
+
+    .container {
+      margin-top: 50px;
+    }
+
+    .note-item {
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center">Notes</h1>
+
+    <!-- Input for adding a new note -->
+    <div class="input-group mb-3">
+      <input type="text" id="newNote" class="form-control" placeholder="Write a new note...">
+      <button class="btn btn-success" id="addNoteBtn">Add Note</button>
+    </div>
+
+    <!-- List of notes -->
+    <ul class="list-group" id="notesList">
+      <!-- Notes will appear here -->
+    </ul>
+  </div>
+
+  <script>
+    // Fetch notes from the server on page load
+    function loadNotes() {
+      $.ajax({
+        url: '/api/notes',
+        type: 'GET',
+        success: function(data) {
+          renderNotes(data);
+        },
+        error: function(err) {
+          alert('Error fetching notes');
+        }
+      });
+    }
+
+    // Function to render notes
+    function renderNotes(notes) {
+      $('#notesList').empty(); // Clear existing notes
+      notes.forEach((note, index) => {
+        $('#notesList').append(`
+          <li class="list-group-item note-item">
+            <span>${note}</span>
+            <div>
+              <button class="btn btn-primary btn-sm edit-note" data-index="${index}">Edit</button>
+              <button class="btn btn-danger btn-sm delete-note" data-index="${index}">Delete</button>
+            </div>
+          </li>
+        `);
+      });
+    }
+
+    // Add a new note
+    $('#addNoteBtn').on('click', function() {
+      const noteText = $('#newNote').val().trim();
+      // if (noteText === '') {
+      //   alert('Please enter a note!');
+      //   return;
+      // }
+
+      // AJAX POST request to add the note
+      $.ajax({
+        url: '/api/notes',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ note: noteText }),
+        success: function() {
+          $('#newNote').val(''); // Clear input
+          loadNotes(); // Reload the notes
+        },
+        error: function(err) {
+          alert('Error adding note');
+        }
+      });
+    });
+
+    // Edit a note
+    $('#notesList').on('click', '.edit-note', function() {
+      const index = $(this).data('index');
+      const currentNote = $(this).closest('li').find('span').text();
+      const newNote = prompt('Edit your note:', currentNote);
+
+      if (newNote !== null && newNote.trim() !== '') {
+        // AJAX PUT request to update the note
+        $.ajax({
+          url: `/api/notes/${index}`,
+          type: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify({ note: newNote.trim() }),
+          success: function() {
+            loadNotes(); // Reload notes after successful update
+          },
+          error: function(err) {
+            alert('Error updating note');
+          }
+        });
+      }
+    });
+
+
+    // Delete a note
+    $('#notesList').on('click', '.delete-note', function() {
+      const index = $(this).data('index');
+
+      // AJAX DELETE request to delete the note
+      $.ajax({
+        url: `/api/notes/${index}`,
+        type: 'DELETE',
+        success: function() {
+          loadNotes(); // Reload the notes after deletion
+        },
+        error: function(err) {
+          alert('Error deleting note');
+        }
+      });
+    });
+
+    // Load notes when the page is ready
+    $(document).ready(function() {
+      loadNotes(); // Initial load
+    });
+  </script>
+
+  <!-- Bootstrap JS (Optional, for Bootstrap components like modals) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
