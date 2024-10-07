@@ -13,6 +13,7 @@ deploy-note-taker: deploy-redis-and-monitors
 
 deploy-metrics-server:
 	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+	minikube addons enable metrics-server
 
 # basic script to run services on localhost
 start-services:
